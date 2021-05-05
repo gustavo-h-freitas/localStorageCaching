@@ -5,10 +5,6 @@ module.exports = {
       throw new ReferenceError('you must pass a response object')
     }
 
-    if ((Array.isArray(body) || typeof body !== 'object') && typeof body !== 'undefined') {
-      throw new TypeError('body must be an object or unset')
-    }
-
     if ((Array.isArray(config) || typeof config !== 'object') && typeof config !== 'undefined') {
       throw new TypeError('config must be an object or unset')
     }

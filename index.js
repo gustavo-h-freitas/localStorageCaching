@@ -1,6 +1,14 @@
 const cache = require('./src/cache')
-let ttl = new Date()
-ttl.setMinutes(ttl.getMinutes() + 15) // default ttl of fifteen minutes
+
+let ttl = localStorage.getItem('ttl')
+if (!ttl) {
+  ttl = new Date()
+  ttl.setMinutes(ttl.getMinutes() + 15) // default ttl of fifteen minutes
+  localStorage.setItem('ttl', ttl)
+} else {
+  ttl = new Date(ttl)
+}
+
 /*
   cachedUrls = [
     {
@@ -112,9 +120,7 @@ module.exports = function (axios, cachedUrls) {
     },
 
     setTtl (ttlParam = new Date()) {
-      console.log(ttl.toLocaleTimeString())
       ttl = ttlParam
-      console.log(ttl.toLocaleTimeString())
     },
 
     checkTtl () {
