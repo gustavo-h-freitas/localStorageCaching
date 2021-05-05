@@ -1,6 +1,6 @@
 
 module.exports = {
-  get (url, body, config, queryParams, bodyParams) {
+  get (url, config, queryParams) {
     if (!url) {
       throw new ReferenceError('you must pass a response object')
     }
@@ -17,26 +17,9 @@ module.exports = {
       throw new TypeError('queryParams must be an object or unset')
     }
 
-    if (!Array.isArray(bodyParams) && typeof bodyParams !== 'undefined') {
-      throw new TypeError('bodyParams must be an array or unset')
-    }
-
-    // if (url[0] !== '/') {
-    //   url = '/' + url
-    // }
-
-    if (Object.keys(queryParams) || Array.isArray(bodyParams)) {
-      const bodyObject = {}
-
-      if (Array.isArray(bodyParams) && body) {
-        bodyParams.forEach(elem => {
-          bodyObject[elem] = body[elem]
-        })
-      }
-
+    if (Object.keys(queryParams)) {
       return localStorage.getItem(url + '-' + JSON.stringify({
         ...(Object.keys(queryParams).length ? { queryParams } : null),
-        ...(Object.keys(bodyObject).length ? { bodyObject } : null)
       }))
     } else if (!config && typeof url === 'object') {
       return localStorage.getItem(url.url)
@@ -46,7 +29,7 @@ module.exports = {
 
   },
 
-  set (res, queryParams, bodyParams, url) {
+  set (res, queryParams, url) {
     if (!res) {
       throw new ReferenceError('you must pass a response object')
     }
@@ -55,23 +38,10 @@ module.exports = {
       throw new TypeError('queryParams must be an object or unset')
     }
 
-    if (!Array.isArray(bodyParams) && typeof bodyParams !== 'undefined') {
-      throw new TypeError('bodyParams must be an array or unset')
-    }
-
-    if (Object.keys(queryParams).length || Array.isArray(bodyParams)) {
-      const bodyObject = {}
-      const req = res.data
-
-      if (Array.isArray(bodyParams)) {
-        bodyParams.forEach(elem => {
-          bodyObject[elem] = req[elem]
-        })
-      }
+    if (Object.keys(queryParams).length) {
 
       localStorage.setItem(url + '-' + JSON.stringify({
         ...(Object.keys(queryParams).length ? { queryParams } : null),
-        ...(Object.keys(bodyObject).length ? { bodyObject } : null)
       }), JSON.stringify(res.data))
 
     } else {

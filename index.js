@@ -1,5 +1,6 @@
 const cache = require('./src/cache')
-
+let ttl = new Date()
+ttl.setMinutes(ttl.getMinutes() + 15) // default ttl of fifteen minutes
 /*
   cachedUrls = [
     {
@@ -48,58 +49,8 @@ module.exports = function (axios, cachedUrls) {
   }
 
   return {
-    async post (url, body, config) {
-      if (!body) {
-        throw ReferenceError('You must provide a body for a post request (even if it is empty)')
-      }
-
-      if (typeof body !== 'object' || Array.isArray(body)) {
-        throw TypeError('The body must be an object (even if it is empty)')
-      }
-
-      let cacheable = false
-
-      cachedUrls.forEach(elem => {
-        if (typeof elem === 'string') {
-          if (url.includes(elem)) {
-            cacheable = elem            
-          }
-        } else {
-          if (url.includes(elem.url)) {
-            cacheable = elem
-          }
-        }
-      })
-
-      if (cacheable) {
-        let cached = null
-
-        if (typeof cacheable === 'string') {
-          cached = cache.get(cacheable)
-        } else {
-          cached = cache.get(cacheable.url, body, config, cacheable.queryParams, cacheable.bodyParams)
-        } 
-
-        if (cached) {
-          return Promise.resolve({
-            data: cached,
-            status: 200,
-            statusText: 'OK',
-            headers: {},
-            request: {}
-          })
-        } else {
-          const response = await axios.post(url, body, config)
-          cache.set(response, cacheable.queryParams, cacheable.bodyParams)
-
-          return response
-        }
-      }
-      
-      return axios.post(url, body, config)
-    },
-
     async get (url, config) {
+      await this.checkTtl() // At the request's beggining check if the ttl is still available
 
       let cacheable = false
 
@@ -133,7 +84,7 @@ module.exports = function (axios, cachedUrls) {
             }
           }
           if (Object.keys(queryKeys).length > 0) {
-            cached = cache.get(url, undefined, config, queryKeys, undefined)
+            cached = cache.get(url, config, queryKeys)
           } else {
             cached = cache.get(cacheable)
           }
@@ -150,7 +101,7 @@ module.exports = function (axios, cachedUrls) {
         } else {
           const response = await axios.get(url, config)
           if (Object.keys(queryKeys).length > 0) {
-            cache.set(response, queryKeys, undefined, url)
+            cache.set(response, queryKeys, url)
           } else {
             cache.set(response)
           }
@@ -160,8 +111,26 @@ module.exports = function (axios, cachedUrls) {
       return axios.get(url, config)
     },
 
-    flushAll () {
-      cache.flushAll()
+    setTtl (ttlParam = new Date()) {
+      console.log(ttl.toLocaleTimeString())
+      ttl = ttlParam
+      console.log(ttl.toLocaleTimeString())
+    },
+
+    checkTtl () {
+      const now = new Date()
+      if (now.getTime() >= ttl.getTime()) {
+        resetKeys()
+      }
+    },
+
+    resetKeys () {
+      const localStorageKeys = Object.keys(window.localStorage)
+      localStorageKeys.forEach(item => {
+        if (item[0] === '/') {
+          localStorage.removeItem(item)
+        }
+      })
     }
   }
 }
